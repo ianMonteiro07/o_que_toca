@@ -2,12 +2,13 @@ import flet as ft
 import api_service as api  
 
 def main(page: ft.Page):
-    page.title = "Vai Tocar o Quê?"
+    page.title = "O que toca?"
     page.theme_mode = ft.ThemeMode.DARK
     page.window_width = 500
     page.window_height = 800
 
     titulo = ft.Text("🎵 O que Toca?", size=30, weight="bold")
+    descricao = ft.Text("Descubra o repertório do último show do seu artista favorito! Digite o nome da banda abaixo para ver a data, o local e as músicas que rolaram na apresentação mais recente.", color=ft.Colors.GREY_400)
     input_banda = ft.TextField(label="Nome da Banda", width=300)
     lista_resultados = ft.ListView(expand=True, spacing=10)
     progresso = ft.ProgressBar(visible=False, color="amber")
@@ -29,7 +30,7 @@ def main(page: ft.Page):
             lista_resultados.controls.append(ft.Text("Nada encontrado.", color="orange"))
         else:
             
-            show = resposta[0] 
+            show = resposta[0]
             
             data = show.get('eventDate', '---')
             venue = show.get('venue', {}).get('name', 'Local desconhecido')
@@ -57,6 +58,6 @@ def main(page: ft.Page):
         page.update()
 
     btn = ft.ElevatedButton("Buscar", on_click=buscar_clique)
-    page.add(titulo, ft.Row([input_banda, btn]), progresso, ft.Divider(height=20), lista_resultados)
+    page.add(titulo, descricao, ft.Row([input_banda, btn]), progresso, ft.Divider(height=20), lista_resultados)
 
 ft.app(target=main)
