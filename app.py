@@ -28,7 +28,7 @@ def main(page: ft.Page):
         elif not resposta:
             lista_resultados.controls.append(ft.Text("Nada encontrado.", color="orange"))
         else:
-            # CORREÇÃO AQUI: Pegamos o primeiro show da lista acessando o índice 0
+            
             show = resposta[0] 
             
             data = show.get('eventDate', '---')
