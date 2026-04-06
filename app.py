@@ -1,38 +1,62 @@
 import flet as ft
+import api_service as api  
 
 def main(page: ft.Page):
-    
-    page.title = "O Que Toca? - Setlist.fm"
-    page.theme_mode = ft.ThemeMode.DARK 
-    page.padding = 30
+    page.title = "Vai Tocar o Quê?"
+    page.theme_mode = ft.ThemeMode.DARK
     page.window_width = 500
-    page.window_height = 700
+    page.window_height = 800
 
-    titulo = ft.Text("🎵 O Que Toca ?", size=30, weight=ft.FontWeight.BOLD)
-    subtitulo = ft.Text("Descubra o setlist do último show da sua banda.", color=ft.Colors.GREY_400)
-    
-    input_banda = ft.TextField(label="Nome da Banda (ex: Djavan)", width=300)
-    btn_buscar = ft.ElevatedButton(text="Procurar", icon=ft.Icons.SEARCH)
-    lista_musicas = ft.ListView(expand=True, spacing=10, padding=20)
+    titulo = ft.Text("🎵 O que Toca?", size=30, weight="bold")
+    input_banda = ft.TextField(label="Nome da Banda", width=300)
+    lista_resultados = ft.ListView(expand=True, spacing=10)
+    progresso = ft.ProgressBar(visible=False, color="amber")
 
-    def ao_clicar(e):
-        lista_musicas.controls.clear()
-        if not input_banda.value:
-            lista_musicas.controls.append(ft.Text("⚠️ Digite o nome de uma banda/artista!", color=ft.Colors.RED_400))
-        else:
-            lista_musicas.controls.append(
-                ft.Text(f"A procurar por: {input_banda.value}...", color=ft.Colors.AMBER)
-            )
+    def buscar_clique(e):
+        if not input_banda.value: return
+        
+        progresso.visible = True
+        lista_resultados.controls.clear()
         page.update()
 
-    btn_buscar.on_click = ao_clicar
+    
+        resposta = api.buscar_ultimo_setlist(input_banda.value)
+        progresso.visible = False
 
-    page.add(
-        titulo,
-        subtitulo,
-        ft.Row([input_banda, btn_buscar]),
-        ft.Divider(height=20, color=ft.Colors.WHITE24),
-        lista_musicas
-    )
+        if isinstance(resposta, dict) and "erro" in resposta:
+            lista_resultados.controls.append(ft.Text(resposta["erro"], color="red"))
+        elif not resposta:
+            lista_resultados.controls.append(ft.Text("Nada encontrado.", color="orange"))
+        else:
+            # CORREÇÃO AQUI: Pegamos o primeiro show da lista acessando o índice 0
+            show = resposta[0] 
+            
+            data = show.get('eventDate', '---')
+            venue = show.get('venue', {}).get('name', 'Local desconhecido')
+            
+            lista_resultados.controls.append(
+                ft.Container(
+                    content=ft.Text(f"📅 {data} - {venue}", weight="bold"),
+                    padding=10, bgcolor=ft.Colors.WHITE10, border_radius=5
+                )
+            )
+
+            sets = show.get('sets', {}).get('set', [])
+            if isinstance(sets, dict): sets = [sets]
+
+            for s in sets:
+                musicas = s.get('song', [])
+                if isinstance(musicas, dict): musicas = [musicas]
+                for m in musicas:
+                    lista_resultados.controls.append(
+                        ft.ListTile(
+                            leading=ft.Icon(ft.Icons.MUSIC_NOTE, color="amber"),
+                            title=ft.Text(m.get('name', 'Música'))
+                        )
+                    )
+        page.update()
+
+    btn = ft.ElevatedButton("Buscar", on_click=buscar_clique)
+    page.add(titulo, ft.Row([input_banda, btn]), progresso, ft.Divider(height=20), lista_resultados)
 
 ft.app(target=main)
