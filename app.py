@@ -20,7 +20,6 @@ def main(page: ft.Page):
         lista_resultados.controls.clear()
         page.update()
 
-    
         resposta = api.buscar_ultimo_setlist(input_banda.value)
         progresso.visible = False
 
@@ -30,8 +29,33 @@ def main(page: ft.Page):
             lista_resultados.controls.append(ft.Text("Nada encontrado.", color="orange"))
         else:
             
-            show = resposta[0]
             
+            show_com_musicas = None
+            
+            
+            lista_shows = resposta if isinstance(resposta, list) else [resposta]
+
+            
+            for evento in lista_shows:
+                if isinstance(evento, dict):
+                    # Tenta pegar as músicas desse evento específico
+                    sets = evento.get('sets', {}).get('set', [])
+                    
+                    
+                    if sets:  
+                        show_com_musicas = evento
+                        break 
+            
+            
+            if not show_com_musicas:
+                lista_resultados.controls.append(ft.Text("A banda foi encontrada, mas nenhum fã cadastrou as músicas dos shows recentes.", color="orange"))
+                page.update()
+                return
+            
+            
+            show = show_com_musicas
+            # ------------------------------------------------
+
             data = show.get('eventDate', '---')
             venue = show.get('venue', {}).get('name', 'Local desconhecido')
             
